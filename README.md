@@ -12,8 +12,8 @@ The agent performs three primary tasks:
 
 ## 📁 FOLDER STRUCTURE
 qc-agent-app/
-├── app.py                # Main Python/Streamlit code
-├── actual_values.csv     # Your CSV data (ID, Actual)
+├── quality_check_app.py  # Main Python/Streamlit code
+├── actual.csv            # Your CSV data (ID, Actual)
 └── README.txt            # This documentation file
 
 ## 🛠️ INSTALLATION (Run in VS Code Terminal)
