@@ -1,6 +1,7 @@
 import streamlit as st
 import pandas as pd
 import numpy as np
+
 # --- 1. SAFE IMPORT HANDLER ---
 try:
     from google.ads.googleads.client import GoogleAdsClient
@@ -11,84 +12,84 @@ except ImportError:
 # --- 2. DATA INGESTION ---
 def get_expected_data():
     data = {
-        'Campaign_ID': ['CAM-01', 'CAM-02', 'CAM-03', 'CAM-04', 'CAM-05'],
-        'Expected_Value': [1200.50, 4500.00, 300.00, 1500.00, 890.20]
+        'ID': ['CAM-01', 'CAM-02', 'CAM-03', 'CAM-04', 'CAM-05'],
+        'Expected': [1200.50, 4500.00, 300.00, 1500.00, 890.20]
     }
     return pd.DataFrame(data)
 
-# --- QC ENGINE LOGIC ---
-class QCAgent:
-    def __init__(self, expected_df, actual_df, threshold):
-        self.expected = expected_df
-        self.actual = actual_df
-        self.threshold = threshold
+# --- 3. QC ENGINE LOGIC ---
+def run_qc_process(expected_df, actual_df, limit):
+    # Standardizing column names to uppercase for internal processing
+    actual_df.columns = [str(col).upper() for col in actual_df.columns]
+    expected_df.columns = [str(col).upper() for col in expected_df.columns]
 
-    def validate(self):
-        # Merge data on ID
-        merged = pd.merge(self.expected, self.actual, on='Campaign_ID', how='inner')
-        
-        # Calculations
-        merged['Variance'] = merged['Actual_Value'] - merged['Expected_Value']
-        merged['Variance_Pct'] = (merged['Variance'] / merged['Expected_Value']) * 100
-        
-        # Threshold Validation
-        merged['QC_Status'] = np.where(
-            merged['Variance_Pct'].abs() <= self.threshold, 
-            'PASS', 
-            'FAIL'
-        )
-        return merged
+    # Merge data
+    merged = pd.merge(expected_df, actual_df, on='ID', how='inner')
+    
+    # Math Logic
+    merged['VARIANCE'] = merged['ACTUAL'] - merged['EXPECTED']
+    merged['VARIANCE_%'] = (merged['VARIANCE'] / merged['EXPECTED']) * 100
+    
+    # Status Assignment
+    merged['QC_RESULT'] = np.where(
+        merged['VARIANCE_%'].abs() <= limit, 
+        '✅ PASS', 
+        '⚠️ FAIL'
+    )
+    return merged
 
-# --- STREAMLIT DASHBOARD ---
+# --- 4. STREAMLIT DASHBOARD UI ---
 def main():
-    st.set_page_config(page_title="AI QC Checker", layout="wide")
-    st.title("🤖 QC AI Agent: Google Ads vs CSV")
+    st.set_page_config(page_title="AI QC Agent", layout="wide")
+    st.title("🛡️ QC AI Agent: Variance Validator")
+
+    st.sidebar.header("Agent Settings")
+    threshold = st.sidebar.slider("Tolerance Threshold (%)", 0.0, 15.0, 5.0)
     
-    st.sidebar.header("Configuration")
-    customer_id = st.sidebar.text_input("Google Ads Customer ID", "123-456-7890")
-    tolerance = st.sidebar.slider("Tolerance Threshold (%)", 0.0, 20.0, 5.0)
-    
-    uploaded_file = st.sidebar.file_uploader("Upload Actuals CSV", type="csv")
+    if not HAS_GOOGLE_ADS:
+        st.sidebar.warning("Running in Mock Mode (API library missing)")
+
+    uploaded_file = st.sidebar.file_uploader("Upload Actual Values (CSV)", type="csv")
 
     if uploaded_file:
-        # Load Data
-        expected_df = get_expected_values(None, customer_id)
+        expected_df = get_expected_data()
         actual_df = pd.read_csv(uploaded_file)
-
-        # Basic Check: Ensure columns exist
-        if 'Campaign_ID' in actual_df.columns and 'Actual_Value' in actual_df.columns:
+        
+        # --- NEW: AUTO-MAPPING LOGIC ---
+        # Look for columns that sound like 'ID' and 'Actual'
+        cols = [str(c).upper() for c in actual_df.columns]
+        
+        if 'ID' in cols and 'ACTUAL' in cols:
+            results = run_qc_process(expected_df, actual_df, threshold)
             
-            # Run Agent
-            agent = QCAgent(expected_df, actual_df, tolerance)
-            results = agent.validate()
+            # Dashboard Metrics
+            fails = len(results[results['QC_RESULT'] == '⚠️ FAIL'])
+            c1, c2, c3 = st.columns(3)
+            c1.metric("Total Records", len(results))
+            c2.metric("Discrepancies", fails, delta=f"{fails} alerts", delta_color="inverse")
+            c3.metric("Threshold", f"{threshold}%")
 
-            # Display KPIs
-            pass_count = len(results[results['QC_Status'] == 'PASS'])
-            fail_count = len(results[results['QC_Status'] == 'FAIL'])
-            
-            col1, col2, col3 = st.columns(3)
-            col1.metric("Total Campaigns", len(results))
-            col2.metric("Passed", pass_count)
-            col3.metric("Failed", fail_count, delta=f"{fail_count}", delta_color="inverse")
-
-            # Publication Table
-            st.subheader("QC Validation Results")
-            
-            def style_status(row):
-                return ['background-color: #d4edda' if row.QC_Status == 'PASS' else 'background-color: #f8d7da'] * len(row)
-
+            # Table Output
+            st.subheader("Validation Table")
             st.dataframe(
-                results.style.apply(style_status, axis=1)
-                .format({'Expected_Value': '${:,.2f}', 'Actual_Value': '${:,.2f}', 'Variance_Pct': '{:.2f}%'})
+                results.style.format({
+                    'EXPECTED': '${:,.2f}', 
+                    'ACTUAL': '${:,.2f}', 
+                    'VARIANCE': '${:,.2f}', 
+                    'VARIANCE_%': '{:.2f}%'
+                })
             )
-
-            # Download Result
-            csv = results.to_csv(index=False).encode('utf-8')
-            st.download_button("Export QC Report", csv, "qc_report.csv", "text/csv")
+            
+            csv_output = results.to_csv(index=False).encode('utf-8')
+            st.download_button("Export Results", csv_output, "qc_report.csv", "text/csv")
         else:
-            st.error("CSV must have 'Campaign_ID' and 'Actual_Value' columns.")
-    else:
-        st.info("Awaiting CSV upload to run validation...")
+            # Helpful error message showing what the app actually sees
+            st.error(f"""
+            **Error:** Required columns not found. 
+            - Looking for: `ID` and `Actual`
+            - Found in your file: `{list(actual_df.columns)}`
+            """)
+            st.info("💡 Please rename your CSV columns to 'ID' and 'Actual' and re-upload.")
 
 if __name__ == "__main__":
     main()
