@@ -1,3 +1,5 @@
+# QC-Agent
+It does compare actual vs expected value
 # 🛡️ QC AI Agent: Variance Reconciliation Engine
 
 This project is a high-performance Quality Control (QC) Agent built with Python and Streamlit. It automates the reconciliation process by comparing "Expected" values from Google Ads API with "Actual" values from CSV uploads.
