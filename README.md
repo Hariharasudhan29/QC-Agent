@@ -29,3 +29,5 @@ qc-agent-app/
 
 ## 📥 EXPORTING
 Once the validation is complete, use the "Export QC Report" button in the dashboard to download the finalized audit trail.
+
+## APP link: https://qc-agent-ntqlrqkvb5nyzyszcdeszo.streamlit.app/
