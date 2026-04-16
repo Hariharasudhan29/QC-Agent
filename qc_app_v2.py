@@ -5,7 +5,7 @@ import numpy as np
 # --- 1. DATA INGESTION ---
 def get_expected_data():
     data = {
-        'ID': ['CAM-01', 'CAM-02', 'CAM-03', 'CAM-04', 'CAM-05'],
+        'ID': [101, 102, 103, 104, 105],
         'Expected': [1200.50, 4500.00, 300.00, 1500.00, 890.20]
     }
     return pd.DataFrame(data)
