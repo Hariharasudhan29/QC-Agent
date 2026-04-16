@@ -6,7 +6,7 @@ import numpy as np
 def get_expected_data():
     data = {
         'ID': [101, 102, 103, 104, 105],
-        'Expected': [1200.50, 4500.00, 300.00, 1500.00, 890.20]
+        'Expected': [1500.0, 2400.0, 500.0, 1200.0, 3000.0]
     }
     return pd.DataFrame(data)
 
