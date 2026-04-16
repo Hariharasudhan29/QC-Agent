@@ -2,11 +2,11 @@
 It does compare actual vs expected value
 # 🛡️ QC AI Agent: Variance Reconciliation Engine
 
-This project is a high-performance Quality Control (QC) Agent built with Python and Streamlit. It automates the reconciliation process by comparing "Expected" values from Google Ads API with "Actual" values from CSV uploads.
+This project is a high-performance Quality Control (QC) Agent built with Python and Streamlit. It automates the reconciliation process by comparing "Expected" values from Google Ads API with "Actual" values from CSV uploads mimicing the mocking environment.
 
 ## 🚀 OVERVIEW
 The agent performs three primary tasks:
-1. Ingestion: Pulls benchmark data from Google Ads and local CSV performance records.
+1. Ingestion: Pulls benchmark data from Google Ads (as a mocking environment) or simply local CSV performance records.
 2. Validation: Calculates the variance ($) and variance percentage (%) between sources.
 3. Publication: Assigns a PASS or FAIL status based on a user-defined Tolerance Threshold.
 
@@ -28,6 +28,6 @@ qc-agent-app/
 - FAIL: If the difference EXCEEDS the threshold.
 
 ## 📥 EXPORTING
-Once the validation is complete, use the "Export QC Report" button in the dashboard to download the finalized audit trail.
+Once the validation is complete, use the "Print" button in the top right of the dashboard to download the finalized audit trail as PDF.
 
 ## APP link: https://qc-agent-ntqlrqkvb5nyzyszcdeszo.streamlit.app/
